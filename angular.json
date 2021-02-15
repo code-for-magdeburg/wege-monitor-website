@@ -36,6 +36,9 @@
             ],
             "scripts": [
               "node_modules/chroma-js/chroma-light.min.js"
+            ],
+            "allowedCommonJsDependencies": [
+              "papaparse"
             ]
           },
           "configurations": {
