@@ -5,6 +5,8 @@ import { AppComponent } from './app.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
+import { HttpClientModule } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -15,7 +17,9 @@ import { LeafletModule } from '@asymmetrik/ngx-leaflet';
     BrowserModule,
     AppRoutingModule,
     NgbModule,
+    HttpClientModule,
     FontAwesomeModule,
+    FormsModule,
     LeafletModule
   ],
   providers: [],

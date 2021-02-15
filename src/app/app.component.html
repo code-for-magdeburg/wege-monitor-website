@@ -1,0 +1,36 @@
+<div id="root">
+
+  <div class="map-view">
+
+    <div *ngIf="options" class="map"
+         leaflet
+         [leafletOptions]="options"
+         (leafletMapReady)="onMapReady($event)">
+    </div>
+
+    <div class="map-footer p-3" style="background-color: #d3d3d3;">
+
+      <div class="mb-3">
+        <label class="btn btn-outline-primary m-0">
+          Aufzeichnung laden <input type="file" #recordingFileInput (change)="recordingFileChanged($event)" hidden>
+        </label>
+
+        <button class="btn btn-outline-primary ml-1" (click)="removeRecording()">Aufzeichung entfernen</button>
+      </div>
+
+      <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="showHideCyclePathsCheckbox" [ngModel]="cyclePathsVisible" (ngModelChange)="showHideCyclePaths($event)">
+        <label class="form-check-label" for="showHideCyclePathsCheckbox">Fahrradwege anzeigen</label>
+      </div>
+
+      <div class="form-group form-check">
+        <input type="checkbox" class="form-check-input" id="showHideBaseDataCheckbox" [ngModel]="baseDataVisible" (ngModelChange)="showHideBaseData($event)">
+        <label class="form-check-label" for="showHideBaseDataCheckbox">Daten anzeigen</label>
+      </div>
+
+    </div>
+
+  </div>
+
+
+</div>
