@@ -10,7 +10,7 @@
     "e2e": "ng e2e",
     "extract-osm-magdeburg": "cd ./tools && ./extract-osm-magdeburg.sh",
     "extract-highways-magdeburg": "cd ./tools && ./extract-highways-magdeburg.sh",
-    "extract-cyclepaths-magdeburg": "node ./tools/parse-osm.js"
+    "extract-cyclepaths-magdeburg": "node ./tools/parse-osm.js && cp ./tools/osm-data-extracts/cyclepaths-magdeburg.geojson ./src/assets/cyclepaths-magdeburg.geojson"
   },
   "private": true,
   "dependencies": {
