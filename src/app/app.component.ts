@@ -26,13 +26,13 @@ export class AppComponent implements OnInit {
 
 
   private chromaScale = chroma.scale('RdYlGn');
+  private map!: LeafletMap;
+  mapOptions: MapOptions = {};
 
-  map!: LeafletMap;
-  options!: MapOptions;
-
-  cyclePathsDataLayer!: LayerGroup;
-  baseDataLayer!: LayerGroup;
-  recordingLayer!: LayerGroup;
+  private cyclePathsDataLayer: LayerGroup = layerGroup();
+  private avgBaseDataLayer: LayerGroup = layerGroup();
+  private maxBaseDataLayer: LayerGroup = layerGroup();
+  private recordingLayer: LayerGroup = layerGroup();
 
   cyclePathsVisible = true;
   baseDataVisible = true;
@@ -46,7 +46,7 @@ export class AppComponent implements OnInit {
 
   ngOnInit(): void {
 
-    this.options = {
+    this.mapOptions = {
       layers: [
         tileLayer(
           'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png',
@@ -65,7 +65,8 @@ export class AppComponent implements OnInit {
   onMapReady(map: LeafletMap): void {
     this.map = map;
     this.loadCyclePaths();
-    this.loadBaseData();
+    this.loadAvgBaseData();
+    this.loadMaxBaseData();
   }
 
 
@@ -81,11 +82,9 @@ export class AppComponent implements OnInit {
 
 
   removeRecording(): void {
-
     if (this.recordingLayer) {
       this.recordingLayer.remove();
     }
-
   }
 
 
@@ -123,10 +122,10 @@ export class AppComponent implements OnInit {
   }
 
 
-  private loadBaseData(): void {
+  private loadAvgBaseData(): void {
 
     this.http
-      .get('assets/base-data.csv', { responseType: 'text' })
+      .get('assets/avg-base-data-h3-res13.csv', { responseType: 'text' })
       .subscribe(csv => {
 
         const parseConfig: ParseConfig = {
@@ -135,34 +134,45 @@ export class AppComponent implements OnInit {
           skipEmptyLines: true,
           complete: parsedResult => {
 
-            const data: any[] = parsedResult.data;
-
-            // Create hash map
-            const baseDataHashMap = new Map();
-            for (const datum of data) {
-              const h3Index = geoToH3(datum.latitude, datum.longitude, 13);
-              const v = baseDataHashMap.get(h3Index);
-              if (v) {
-                baseDataHashMap.set(h3Index, [...v, datum]);
-              } else {
-                baseDataHashMap.set(h3Index, [datum]);
-              }
-            }
-
-            // Convert hash map into hexagon data structure
-            const layers: Layer[] = [];
-            baseDataHashMap.forEach((values: any[], h3Index) => {
-              //const avg = values.reduce((p, c) => p + c.acceleration, 0) / values.length;
-              //const color = this.colorScale(avg);
-              const max = values.reduce((p, c) => c.acceleration > p ? c.acceleration : p, 0) / values.length;
-              const fillColor = this.colorScale(max);
-              const poly = h3ToGeoBoundary(h3Index);
-              //layers.push(polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor, fillOpacity: 0.6 }));
-              const center = h3ToGeo(h3Index);
-              layers.push(circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor, fillOpacity: 0.6 }));
+            const data: { h3Index: string, avgAcceleration: number }[] = parsedResult.data;
+            const layers: Layer[] = data.map(row => {
+              const fillColor = this.baseDataColorScale(row.avgAcceleration);
+              const poly = h3ToGeoBoundary(row.h3Index);
+              return polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor, fillOpacity: 0.6 });
             });
+            this.avgBaseDataLayer = layerGroup(layers).addTo(this.map);
 
-            this.baseDataLayer = layerGroup(layers).addTo(this.map);
+          }
+        };
+        this.papa.parse(csv, parseConfig);
+
+      }, err => {
+        // TODO: Handle error
+        console.log(err);
+      });
+
+  }
+
+
+  private loadMaxBaseData(): void {
+
+    this.http
+      .get('assets/max-base-data-h3-res14.csv', { responseType: 'text' })
+      .subscribe(csv => {
+
+        const parseConfig: ParseConfig = {
+          header: true,
+          dynamicTyping: true,
+          skipEmptyLines: true,
+          complete: parsedResult => {
+
+            const data: { h3Index: string, maxAcceleration: number }[] = parsedResult.data;
+            const layers: Layer[] = data.map(row => {
+              const fillColor = this.baseDataColorScale(row.maxAcceleration);
+              const center = h3ToGeo(row.h3Index);
+              return circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor, fillOpacity: 0.6 });
+            });
+            this.maxBaseDataLayer = layerGroup(layers).addTo(this.map);
 
           }
         };
@@ -207,7 +217,12 @@ export class AppComponent implements OnInit {
 
 
   private colorScale(acceleration: number): string {
-    return this.chromaScale(0.8 - acceleration / 10).hex();
+    return this.chromaScale(1 - acceleration).hex();
+  }
+
+
+  private baseDataColorScale(acceleration: number): string {
+    return this.chromaScale(1 - acceleration).hex();
   }
 
 
@@ -222,12 +237,14 @@ export class AppComponent implements OnInit {
 
 
   private showBaseData(): void {
-    this.baseDataLayer.addTo(this.map);
+    this.avgBaseDataLayer.addTo(this.map);
+    this.maxBaseDataLayer.addTo(this.map);
   }
 
 
   private hideBaseData(): void {
-    this.baseDataLayer.remove();
+    this.avgBaseDataLayer.remove();
+    this.maxBaseDataLayer.remove();
   }
 
 

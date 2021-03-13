@@ -2,9 +2,9 @@
 
   <div class="map-view">
 
-    <div *ngIf="options" class="map"
+    <div *ngIf="mapOptions" class="map"
          leaflet
-         [leafletOptions]="options"
+         [leafletOptions]="mapOptions"
          (leafletMapReady)="onMapReady($event)">
     </div>
 
