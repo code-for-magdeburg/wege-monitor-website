@@ -195,8 +195,9 @@ export class AppComponent implements OnInit {
       complete: parsedResults => {
 
         const array: any[] = parsedResults.data;
+        const maxValue = Math.max(...array.map(a => a.avgAcceleration));
         const layers = array.map(row => {
-          const fillColor = this.colorScale(row.acceleration);
+          const fillColor = this.colorScale(row.avgAcceleration / maxValue);
           return circle(latLng(row.latitude, row.longitude), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
         });
 
