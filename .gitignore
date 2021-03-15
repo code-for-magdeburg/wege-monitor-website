@@ -52,3 +52,6 @@ Thumbs.db
 /tools/osm-data-extracts/highways-magdeburg-latest.osm.pbf
 /tools/osm-data-extracts/sachsen-anhalt-latest.osm.pbf
 /tools/osm-data-extracts/cyclepaths-magdeburg.geojson
+
+# Local Netlify folder
+.netlify
