@@ -35,6 +35,7 @@
     "geojson": "^0.5.0",
     "h3-js": "^3.7.0",
     "jquery": "^3.5.1",
+    "jszip": "^3.6.0",
     "leaflet": "^1.7.1",
     "ngx-papaparse": "^5.0.0",
     "osm-read": "^0.7.0",

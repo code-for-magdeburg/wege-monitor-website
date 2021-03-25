@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Compiler, Component, Injector, OnInit } from '@angular/core';
 import {
   circle, geoJSON,
   latLng,
@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 import { Papa, ParseConfig } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
+import { Recording } from './track-analysis/track-loader.service';
 
 
 const centerMagdeburg = latLng(52.120545, 11.627632);
@@ -37,10 +38,12 @@ export class AppComponent implements OnInit {
   cyclePathsVisible = true;
   baseDataVisible = true;
 
-  @ViewChild('recordingFileInput') recordingFileInput!: ElementRef;
 
-
-  constructor(private http: HttpClient, private papa: Papa) {
+  constructor(
+    private http: HttpClient,
+    private papa: Papa,
+    private compiler: Compiler,
+    private injector: Injector) {
   }
 
 
@@ -70,13 +73,19 @@ export class AppComponent implements OnInit {
   }
 
 
-  recordingFileChanged(ev: Event): void {
+  loadRecording(): void {
 
-    const inputElement = ev.target as HTMLInputElement;
-    if (inputElement.files && inputElement.files.length > 0) {
-      this.loadRecording(inputElement.files[0]);
-      this.recordingFileInput.nativeElement.value = '';
-    }
+    import('./track-analysis/track-analysis.module')
+      .then(async ({ TrackAnalysisModule }) => {
+
+        const moduleFactory = await this.compiler.compileModuleAsync(TrackAnalysisModule);
+        moduleFactory
+          .create(this.injector)
+          .instance
+          .openRecordingModal()
+          .subscribe(loadedRecording => this.processRecording(loadedRecording));
+
+      });
 
   }
 
@@ -186,33 +195,30 @@ export class AppComponent implements OnInit {
   }
 
 
-  private loadRecording(file: File): void {
+  private async processRecording(recording: Recording[]): Promise<void> {
 
-    const parseConfig: ParseConfig = {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: parsedResults => {
+/*
+    const maxValue = Math.max(...recording.map(a => a.avgAcceleration));
+    const layers = recording.map(row => {
+      const fillColor = this.colorScale(row.avgAcceleration / maxValue);
+      return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
+    });
+*/
 
-        const array: any[] = parsedResults.data;
-        const maxValue = Math.max(...array.map(a => a.avgAcceleration));
-        const layers = array.map(row => {
-          const fillColor = this.colorScale(row.avgAcceleration / maxValue);
-          return circle(latLng(row.latitude, row.longitude), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
-        });
+    const maxValue = Math.max(...recording.map(a => a.maxAcceleration));
+    const layers = recording.map(row => {
+      const fillColor = this.colorScale(row.maxAcceleration / maxValue);
+      return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
+    });
 
-        if (this.recordingLayer) {
-          this.recordingLayer.clearLayers();
-        }
-        this.recordingLayer = layerGroup(layers).addTo(this.map);
+    if (this.recordingLayer) {
+      this.recordingLayer.clearLayers();
+    }
+    this.recordingLayer = layerGroup(layers).addTo(this.map);
 
-        const lle = array.map(row => latLng(row.latitude, row.longitude));
-        const llb = latLngBounds(lle);
-        this.map.fitBounds(llb);
-
-      }
-    };
-    this.papa.parse(file, parseConfig);
+    const lle = recording.map(row => latLng(row.lat, row.lon));
+    const llb = latLngBounds(lle);
+    this.map.fitBounds(llb);
 
   }
 
