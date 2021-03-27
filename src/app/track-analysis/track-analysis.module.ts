@@ -19,7 +19,7 @@ export class TrackAnalysisModule {
   }
 
 
-  public openRecordingModal(): Observable<Recording[]> {
+  public openRecordingModal(): Observable<Recording> {
     const modalRef = this.modalService.open(LoadTrackdataModalComponent);
     return (modalRef.componentInstance as LoadTrackdataModalComponent).recordingLoaded.asObservable();
   }

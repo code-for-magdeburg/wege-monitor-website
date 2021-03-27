@@ -6,11 +6,15 @@ import { FaIconLibrary, FontAwesomeModule } from '@fortawesome/angular-fontaweso
 import { LeafletModule } from '@asymmetrik/ngx-leaflet';
 import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { TrackOptionsComponent } from './track-options/track-options.component';
+import { registerLocaleData } from '@angular/common';
+import de from '@angular/common/locales/de';
 
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    TrackOptionsComponent
   ],
   imports: [
     BrowserModule,
@@ -28,6 +32,7 @@ export class AppModule {
 
   constructor(library: FaIconLibrary) {
     library.addIcons();
+    registerLocaleData(de);
   }
 
 

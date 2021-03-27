@@ -12,10 +12,18 @@ import { HttpClient } from '@angular/common/http';
 import { Papa, ParseConfig } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
-import { Recording } from './track-analysis/track-loader.service';
+import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 
 
-const centerMagdeburg = latLng(52.120545, 11.627632);
+const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
+
+const MIN_VELOCITY = 15 / 3.6;
+const BEST_VELOCITY = 20 / 3.6;
+const MAX_VELOCITY = 25 / 3.6;
+const TOO_SLOW = 'TOO_SLOW';
+const TOO_FAST = 'TOO_FAST';
+const GOOD_SPEED = 'GOOD_SPEED';
+const PERFECT_SPEED = 'PERFECT_SPEED';
 
 
 @Component({
@@ -37,6 +45,47 @@ export class AppComponent implements OnInit {
 
   cyclePathsVisible = true;
   baseDataVisible = true;
+  track: Track | null = null;
+
+
+  private static rateVelocity(velocity: number): string {
+
+    if (velocity < MIN_VELOCITY) {
+      return TOO_SLOW;
+    }
+
+    if (velocity > MAX_VELOCITY) {
+      return TOO_FAST;
+    }
+
+    if (velocity > BEST_VELOCITY) {
+      return GOOD_SPEED;
+    }
+
+    return PERFECT_SPEED;
+
+  }
+
+
+  private static evaluateRecording(recording: RecordingPerTimeUnit[]): RecordingWithRating[] {
+
+    return recording.map(row => {
+      return {
+        velocityRating: AppComponent.rateVelocity(row.velocity),
+        recordingData: row
+      };
+    });
+
+  }
+
+
+  private static filterAcceptedRecording(evaluatedData: RecordingWithRating[]): RecordingPerTimeUnit[] {
+
+    return evaluatedData
+      .filter(e => e.velocityRating === GOOD_SPEED || e.velocityRating === PERFECT_SPEED)
+      .map(d => d.recordingData);
+
+  }
 
 
   constructor(
@@ -59,7 +108,7 @@ export class AppComponent implements OnInit {
           })
       ],
       zoom: 13,
-      center: centerMagdeburg
+      center: CENTER_MAGDEBURG
     };
 
   }
@@ -83,7 +132,7 @@ export class AppComponent implements OnInit {
           .create(this.injector)
           .instance
           .openRecordingModal()
-          .subscribe(loadedRecording => this.processRecording(loadedRecording));
+          .subscribe(recording => this.processRecording(recording));
 
       });
 
@@ -94,6 +143,7 @@ export class AppComponent implements OnInit {
     if (this.recordingLayer) {
       this.recordingLayer.remove();
     }
+    this.track = null;
   }
 
 
@@ -195,18 +245,14 @@ export class AppComponent implements OnInit {
   }
 
 
-  private async processRecording(recording: Recording[]): Promise<void> {
+  private async processRecording(recording: Recording): Promise<void> {
 
-/*
-    const maxValue = Math.max(...recording.map(a => a.avgAcceleration));
-    const layers = recording.map(row => {
-      const fillColor = this.colorScale(row.avgAcceleration / maxValue);
-      return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
-    });
-*/
+    const evaluatedData = AppComponent.evaluateRecording(recording.recordingsPerTimeUnit);
+    const acceptedData = AppComponent.filterAcceptedRecording(evaluatedData);
+    this.track = { recording, evaluatedData, acceptedData };
 
-    const maxValue = Math.max(...recording.map(a => a.maxAcceleration));
-    const layers = recording.map(row => {
+    const maxValue = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
+    const layers = recording.recordingsPerTimeUnit.map(row => {
       const fillColor = this.colorScale(row.maxAcceleration / maxValue);
       return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
     });
@@ -216,7 +262,7 @@ export class AppComponent implements OnInit {
     }
     this.recordingLayer = layerGroup(layers).addTo(this.map);
 
-    const lle = recording.map(row => latLng(row.lat, row.lon));
+    const lle = acceptedData.map(row => latLng(row.lat, row.lon));
     const llb = latLngBounds(lle);
     this.map.fitBounds(llb);
 
@@ -256,3 +302,6 @@ export class AppComponent implements OnInit {
 
 
 }
+
+
+

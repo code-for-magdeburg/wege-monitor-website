@@ -12,7 +12,7 @@ import { Recording, TrackLoaderService } from '../track-loader.service';
 export class LoadTrackdataModalComponent {
 
 
-  recordingLoaded = new Subject<Recording[]>();
+  recordingLoaded = new Subject<Recording>();
 
   @ViewChild('recordingFileInput') recordingFileInput!: ElementRef;
 
@@ -27,9 +27,20 @@ export class LoadTrackdataModalComponent {
     if (inputElement.files && inputElement.files.length > 0) {
       const loadedPhyphoxExport = await this.trackLoaderService.loadPhyphoxExport(inputElement.files[0]);
       if (loadedPhyphoxExport) {
-        const preprocessedRecording = await this.trackLoaderService.preprocessPhyphoxExport(loadedPhyphoxExport);
-        const recording = await this.trackLoaderService.aggregateRecordingData(preprocessedRecording);
+
+        const normalizedRecordings = await this.trackLoaderService.normalizePhyphoxExport(loadedPhyphoxExport);
+        const recordingsPerTimeUnit = await this.trackLoaderService.aggregateRecordingData(normalizedRecordings);
+
+        const recording: Recording = {
+          sourceType: 'phyphox',
+          raw: loadedPhyphoxExport,
+          normalizedRecordings,
+          recordingsPerTimeUnit
+        };
         this.recordingLoaded.next(recording);
+
+        this.activeModal.dismiss();
+
       } else {
         // TODO: Handle failed loading of export file
       }

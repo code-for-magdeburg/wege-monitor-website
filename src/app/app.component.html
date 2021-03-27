@@ -7,6 +7,8 @@
          (leafletMapReady)="onMapReady($event)">
     </div>
 
+    <app-track-options *ngIf="track" [track]="track"></app-track-options>
+
     <div class="map-footer p-3" style="background-color: #d3d3d3;">
 
       <div class="mb-3">

@@ -3,6 +3,13 @@ import * as JSZip from 'jszip';
 import { Papa, ParseConfig } from 'ngx-papaparse';
 
 
+export type Recording = {
+  sourceType: 'phyphox' | 'unknown';
+  raw: any;
+  normalizedRecordings: RecordingRaw[];
+  recordingsPerTimeUnit: RecordingPerTimeUnit[];
+};
+
 export type PhyphoxExport = {
   accelerationCsv: string;
   locationCsv: string;
@@ -29,7 +36,7 @@ export type RecordingRaw = {
   velocity: number;
 };
 
-export type Recording = {
+export type RecordingPerTimeUnit = {
   time: number;
   lat: number;
   lon: number;
@@ -37,6 +44,17 @@ export type Recording = {
   avgAcceleration: number;
   velocity: number;
   raw: RecordingRaw[];
+};
+
+export type RecordingWithRating = {
+  recordingData: RecordingPerTimeUnit;
+  velocityRating: string;
+};
+
+export type Track = {
+  recording: Recording;
+  evaluatedData: RecordingWithRating[];
+  acceptedData: RecordingPerTimeUnit[];
 };
 
 
@@ -142,7 +160,7 @@ export class TrackLoaderService {
   }
 
 
-  async preprocessPhyphoxExport(phyphoxExport: PhyphoxExport): Promise<RecordingRaw[]> {
+  async normalizePhyphoxExport(phyphoxExport: PhyphoxExport): Promise<RecordingRaw[]> {
 
     const parseLocationCsvPromise = this.parseCsv(phyphoxExport.locationCsv);
     const parseAccelerationCsvPromise = this.parseCsv(phyphoxExport.accelerationCsv);
@@ -155,7 +173,7 @@ export class TrackLoaderService {
   }
 
 
-  async aggregateRecordingData(recording: RecordingRaw[]): Promise<Recording[]> {
+  async aggregateRecordingData(recording: RecordingRaw[]): Promise<RecordingPerTimeUnit[]> {
 
     const m = recording.reduce(
       (entryMap, e) => entryMap.set(e.locTime, [...entryMap.get(e.locTime) || [], e]),
