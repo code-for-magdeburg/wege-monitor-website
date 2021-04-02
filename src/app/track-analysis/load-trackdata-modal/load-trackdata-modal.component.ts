@@ -25,6 +25,7 @@ export class LoadTrackdataModalComponent {
 
     const inputElement = event.target as HTMLInputElement;
     if (inputElement.files && inputElement.files.length > 0) {
+
       const loadedPhyphoxExport = await this.trackLoaderService.loadPhyphoxExport(inputElement.files[0]);
       if (loadedPhyphoxExport) {
 
@@ -44,7 +45,9 @@ export class LoadTrackdataModalComponent {
       } else {
         // TODO: Handle failed loading of export file
       }
+
       this.recordingFileInput.nativeElement.value = '';
+
     }
 
   }

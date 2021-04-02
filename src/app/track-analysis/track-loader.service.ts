@@ -13,6 +13,8 @@ export type Recording = {
 export type PhyphoxExport = {
   accelerationCsv: string;
   locationCsv: string;
+  metaDeviceCsv?: string;
+  metaTimeCsv?: string;
 };
 
 export type PhyphoxLocationData = {
@@ -149,10 +151,17 @@ export class TrackLoaderService {
     const unzipped = await new JSZip().loadAsync(file);
     const accelerationCsvPromise = unzipped.file('Acceleration.csv')?.async('text');
     const locationCsvPromise = unzipped.file('Location.csv')?.async('text');
-    const [accelerationCsv, locationCsv] = await Promise.all([accelerationCsvPromise, locationCsvPromise]);
+    const metaDeviceCsvPromise = unzipped.file('meta/device.csv')?.async('text');
+    const metaTimeCsvPromise = unzipped.file('meta/time.csv')?.async('text');
+    const [accelerationCsv, locationCsv, metaDeviceCsv, metaTimeCsv] = await Promise.all([
+      accelerationCsvPromise,
+      locationCsvPromise,
+      metaDeviceCsvPromise,
+      metaTimeCsvPromise
+    ]);
 
     if (accelerationCsv && locationCsv) {
-      return { accelerationCsv, locationCsv };
+      return { accelerationCsv, locationCsv, metaDeviceCsv, metaTimeCsv };
     }
 
     return null;

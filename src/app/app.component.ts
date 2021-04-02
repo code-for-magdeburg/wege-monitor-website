@@ -251,9 +251,9 @@ export class AppComponent implements OnInit {
     const acceptedData = AppComponent.filterAcceptedRecording(evaluatedData);
     this.track = { recording, evaluatedData, acceptedData };
 
-    const maxValue = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
+    const maxAcceleration = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
     const layers = recording.recordingsPerTimeUnit.map(row => {
-      const fillColor = this.colorScale(row.maxAcceleration / maxValue);
+      const fillColor = this.colorScale(row.maxAcceleration / maxAcceleration);
       return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
     });
 
@@ -262,7 +262,7 @@ export class AppComponent implements OnInit {
     }
     this.recordingLayer = layerGroup(layers).addTo(this.map);
 
-    const lle = acceptedData.map(row => latLng(row.lat, row.lon));
+    const lle = recording.recordingsPerTimeUnit.map(row => latLng(row.lat, row.lon));
     const llb = latLngBounds(lle);
     this.map.fitBounds(llb);
 
