@@ -1,0 +1,14 @@
+<div class="modal-header">
+  <h4 class="modal-title">Aufzeichnung laden</h4>
+  <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <label class="btn btn-outline-primary m-0">
+    Phyphox-Datei wählen <input type="file" #recordingFileInput (change)="recordingFileChanged($event)" hidden>
+  </label>
+
+</div>

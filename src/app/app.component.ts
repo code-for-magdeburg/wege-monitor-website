@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Compiler, Component, Injector, OnInit } from '@angular/core';
 import {
   circle, geoJSON,
   latLng,
@@ -12,9 +12,18 @@ import { HttpClient } from '@angular/common/http';
 import { Papa, ParseConfig } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
+import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 
 
-const centerMagdeburg = latLng(52.120545, 11.627632);
+const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
+
+const MIN_VELOCITY = 15 / 3.6;
+const BEST_VELOCITY = 20 / 3.6;
+const MAX_VELOCITY = 25 / 3.6;
+const TOO_SLOW = 'TOO_SLOW';
+const TOO_FAST = 'TOO_FAST';
+const GOOD_SPEED = 'GOOD_SPEED';
+const PERFECT_SPEED = 'PERFECT_SPEED';
 
 
 @Component({
@@ -36,11 +45,54 @@ export class AppComponent implements OnInit {
 
   cyclePathsVisible = true;
   baseDataVisible = true;
+  track: Track | null = null;
 
-  @ViewChild('recordingFileInput') recordingFileInput!: ElementRef;
+
+  private static rateVelocity(velocity: number): string {
+
+    if (velocity < MIN_VELOCITY) {
+      return TOO_SLOW;
+    }
+
+    if (velocity > MAX_VELOCITY) {
+      return TOO_FAST;
+    }
+
+    if (velocity > BEST_VELOCITY) {
+      return GOOD_SPEED;
+    }
+
+    return PERFECT_SPEED;
+
+  }
 
 
-  constructor(private http: HttpClient, private papa: Papa) {
+  private static evaluateRecording(recording: RecordingPerTimeUnit[]): RecordingWithRating[] {
+
+    return recording.map(row => {
+      return {
+        velocityRating: AppComponent.rateVelocity(row.velocity),
+        recordingData: row
+      };
+    });
+
+  }
+
+
+  private static filterAcceptedRecording(evaluatedData: RecordingWithRating[]): RecordingPerTimeUnit[] {
+
+    return evaluatedData
+      .filter(e => e.velocityRating === GOOD_SPEED || e.velocityRating === PERFECT_SPEED)
+      .map(d => d.recordingData);
+
+  }
+
+
+  constructor(
+    private http: HttpClient,
+    private papa: Papa,
+    private compiler: Compiler,
+    private injector: Injector) {
   }
 
 
@@ -56,7 +108,7 @@ export class AppComponent implements OnInit {
           })
       ],
       zoom: 13,
-      center: centerMagdeburg
+      center: CENTER_MAGDEBURG
     };
 
   }
@@ -70,13 +122,19 @@ export class AppComponent implements OnInit {
   }
 
 
-  recordingFileChanged(ev: Event): void {
+  loadRecording(): void {
 
-    const inputElement = ev.target as HTMLInputElement;
-    if (inputElement.files && inputElement.files.length > 0) {
-      this.loadRecording(inputElement.files[0]);
-      this.recordingFileInput.nativeElement.value = '';
-    }
+    import('./track-analysis/track-analysis.module')
+      .then(async ({ TrackAnalysisModule }) => {
+
+        const moduleFactory = await this.compiler.compileModuleAsync(TrackAnalysisModule);
+        moduleFactory
+          .create(this.injector)
+          .instance
+          .openRecordingModal()
+          .subscribe(recording => this.processRecording(recording));
+
+      });
 
   }
 
@@ -85,6 +143,7 @@ export class AppComponent implements OnInit {
     if (this.recordingLayer) {
       this.recordingLayer.remove();
     }
+    this.track = null;
   }
 
 
@@ -186,33 +245,26 @@ export class AppComponent implements OnInit {
   }
 
 
-  private loadRecording(file: File): void {
+  private async processRecording(recording: Recording): Promise<void> {
 
-    const parseConfig: ParseConfig = {
-      header: true,
-      dynamicTyping: true,
-      skipEmptyLines: true,
-      complete: parsedResults => {
+    const evaluatedData = AppComponent.evaluateRecording(recording.recordingsPerTimeUnit);
+    const acceptedData = AppComponent.filterAcceptedRecording(evaluatedData);
+    this.track = { recording, evaluatedData, acceptedData };
 
-        const array: any[] = parsedResults.data;
-        const maxValue = Math.max(...array.map(a => a.avgAcceleration));
-        const layers = array.map(row => {
-          const fillColor = this.colorScale(row.avgAcceleration / maxValue);
-          return circle(latLng(row.latitude, row.longitude), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
-        });
+    const maxAcceleration = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
+    const layers = recording.recordingsPerTimeUnit.map(row => {
+      const fillColor = this.colorScale(row.maxAcceleration / maxAcceleration);
+      return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
+    });
 
-        if (this.recordingLayer) {
-          this.recordingLayer.clearLayers();
-        }
-        this.recordingLayer = layerGroup(layers).addTo(this.map);
+    if (this.recordingLayer) {
+      this.recordingLayer.clearLayers();
+    }
+    this.recordingLayer = layerGroup(layers).addTo(this.map);
 
-        const lle = array.map(row => latLng(row.latitude, row.longitude));
-        const llb = latLngBounds(lle);
-        this.map.fitBounds(llb);
-
-      }
-    };
-    this.papa.parse(file, parseConfig);
+    const lle = recording.recordingsPerTimeUnit.map(row => latLng(row.lat, row.lon));
+    const llb = latLngBounds(lle);
+    this.map.fitBounds(llb);
 
   }
 
@@ -250,3 +302,6 @@ export class AppComponent implements OnInit {
 
 
 }
+
+
+
