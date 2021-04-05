@@ -9,13 +9,15 @@ import {
   tileLayer
 } from 'leaflet';
 import { HttpClient } from '@angular/common/http';
-import { Papa, ParseConfig } from 'ngx-papaparse';
+import { Papa } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
 import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
+const H3_MAGDEBURG_RES7 = geoToH3(CENTER_MAGDEBURG.lat, CENTER_MAGDEBURG.lng, 7);
+
 
 const MIN_VELOCITY = 15 / 3.6;
 const BEST_VELOCITY = 20 / 3.6;
@@ -117,8 +119,7 @@ export class AppComponent implements OnInit {
   onMapReady(map: LeafletMap): void {
     this.map = map;
     this.loadCyclePaths();
-    this.loadAvgBaseData();
-    this.loadMaxBaseData();
+    this.loadBaseData();
   }
 
 
@@ -181,65 +182,30 @@ export class AppComponent implements OnInit {
   }
 
 
-  private loadAvgBaseData(): void {
+  private loadBaseData(): void {
 
+    const params = { h3Res7Key: H3_MAGDEBURG_RES7 };
     this.http
-      .get('assets/avg-base-data-h3-res13.csv', { responseType: 'text' })
-      .subscribe(csv => {
+      .get<{ h3Index: string, maxAcceleration: number, avgAcceleration: number }[]>('/.netlify/functions/get-base-data', { params })
+      .subscribe(data => {
 
-        const parseConfig: ParseConfig = {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: parsedResult => {
+        const layers: { avgLayer: Layer, maxLayer: Layer }[] = data.map(row => {
 
-            const data: { h3Index: string, avgAcceleration: number }[] = parsedResult.data;
-            const layers: Layer[] = data.map(row => {
-              const fillColor = this.baseDataColorScale(row.avgAcceleration);
-              const poly = h3ToGeoBoundary(row.h3Index);
-              return polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor, fillOpacity: 0.6 });
-            });
-            this.avgBaseDataLayer = layerGroup(layers).addTo(this.map);
+          const avgFillColor = this.baseDataColorScale(row.avgAcceleration);
+          const poly = h3ToGeoBoundary(row.h3Index);
+          const avgLayer = polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor: avgFillColor, fillOpacity: 0.6 });
 
-          }
-        };
-        this.papa.parse(csv, parseConfig);
+          const maxFillColor = this.baseDataColorScale(row.maxAcceleration);
+          const center = h3ToGeo(row.h3Index);
+          const maxLayer = circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor: maxFillColor, fillOpacity: 0.6 });
 
-      }, err => {
-        // TODO: Handle error
-        console.log(err);
-      });
+          return { avgLayer, maxLayer };
 
-  }
+        });
 
+        this.avgBaseDataLayer = layerGroup(layers.map(l => l.avgLayer)).addTo(this.map);
+        this.maxBaseDataLayer = layerGroup(layers.map(l => l.maxLayer)).addTo(this.map);
 
-  private loadMaxBaseData(): void {
-
-    this.http
-      .get('assets/max-base-data-h3-res14.csv', { responseType: 'text' })
-      .subscribe(csv => {
-
-        const parseConfig: ParseConfig = {
-          header: true,
-          dynamicTyping: true,
-          skipEmptyLines: true,
-          complete: parsedResult => {
-
-            const data: { h3Index: string, maxAcceleration: number }[] = parsedResult.data;
-            const layers: Layer[] = data.map(row => {
-              const fillColor = this.baseDataColorScale(row.maxAcceleration);
-              const center = h3ToGeo(row.h3Index);
-              return circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor, fillOpacity: 0.6 });
-            });
-            this.maxBaseDataLayer = layerGroup(layers).addTo(this.map);
-
-          }
-        };
-        this.papa.parse(csv, parseConfig);
-
-      }, err => {
-        // TODO: Handle error
-        console.log(err);
       });
 
   }
