@@ -41,6 +41,7 @@ export type RecordingRaw = {
   lon: number;
   acceleration: number;
   velocity: number;
+  isSynthetic?: boolean
 };
 
 export type RecordingPerTimeUnit = {
@@ -206,7 +207,20 @@ export class TrackLoaderService {
 
   normalizeCustomExport(customExport: ParseResult): RecordingRaw[] {
 
-    return customExport.data.map((row: any) => {
+    const data = customExport.data;
+    const syntheticRows = customExport.data.map((row: any) => {
+      return {
+        date: row.date,
+        time: row.time,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        shockmax: (+row.shockavg * 2) - +row.shockmax,
+        speed: row.speed,
+        isSynthetic: true
+      };
+    });
+
+    return [...syntheticRows, ...data].map((row: any) => {
 
       const year = +row.date.substr(0, 4);
       const month = +row.date.substr(4, 2) - 1;
@@ -223,7 +237,8 @@ export class TrackLoaderService {
         lat: +row.latitude,
         lon: +row.longitude,
         acceleration: +row.shockmax,
-        velocity: +row.speed
+        velocity: +row.speed,
+        isSynthetic: !!row.isSynthetic
       };
 
     });
