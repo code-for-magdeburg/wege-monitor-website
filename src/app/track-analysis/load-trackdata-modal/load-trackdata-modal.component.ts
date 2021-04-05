@@ -15,6 +15,7 @@ export class LoadTrackdataModalComponent {
   recordingLoaded = new Subject<Recording>();
 
   @ViewChild('recordingFileInput') recordingFileInput!: ElementRef;
+  @ViewChild('customRecordingFileInput') customRecordingFileInput!: ElementRef;
 
 
   constructor(public activeModal: NgbActiveModal, private trackLoaderService: TrackLoaderService) {
@@ -47,6 +48,38 @@ export class LoadTrackdataModalComponent {
       }
 
       this.recordingFileInput.nativeElement.value = '';
+
+    }
+
+  }
+
+
+  async customRecordingFileChanged(event: Event): Promise<void> {
+
+    const inputElement = event.target as HTMLInputElement;
+    if (inputElement.files && inputElement.files.length > 0) {
+
+      const loadedCustomExport = await this.trackLoaderService.loadCustomExport(inputElement.files[0]);
+      if (loadedCustomExport) {
+
+        const normalizedRecordings = await this.trackLoaderService.normalizeCustomExport(loadedCustomExport);
+        const recordingsPerTimeUnit = await this.trackLoaderService.aggregateRecordingData(normalizedRecordings);
+
+        const recording: Recording = {
+          sourceType: 'custom',
+          raw: loadedCustomExport,
+          normalizedRecordings,
+          recordingsPerTimeUnit
+        };
+        this.recordingLoaded.next(recording);
+
+        this.activeModal.dismiss();
+
+      } else {
+        // TODO: Handle failed loading of export file
+      }
+
+      this.customRecordingFileInput.nativeElement.value = '';
 
     }
 

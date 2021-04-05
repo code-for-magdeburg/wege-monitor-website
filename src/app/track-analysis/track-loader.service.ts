@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import * as JSZip from 'jszip';
-import { Papa, ParseConfig } from 'ngx-papaparse';
+import { Papa, ParseConfig, ParseResult } from 'ngx-papaparse';
 
 
 export type Recording = {
-  sourceType: 'phyphox' | 'unknown';
+  sourceType: 'phyphox' | 'custom' | 'unknown';
   raw: any;
   normalizedRecordings: RecordingRaw[];
   recordingsPerTimeUnit: RecordingPerTimeUnit[];
@@ -29,6 +29,11 @@ export type PhyphoxAccelerationData = {
   accAbsolute: number;
 };
 
+export type CustomExport = {
+  date: string;
+  time: string;
+};
+
 export type RecordingRaw = {
   locTime: number;
   accTime: number;
@@ -36,6 +41,7 @@ export type RecordingRaw = {
   lon: number;
   acceleration: number;
   velocity: number;
+  isSynthetic?: boolean
 };
 
 export type RecordingPerTimeUnit = {
@@ -178,6 +184,64 @@ export class TrackLoaderService {
     const accelerationData = (accelerationCsv.data as Array<any>).map(TrackLoaderService.mapPhyphoxAccelerationCsv);
 
     return TrackLoaderService.mergePhyphoxData(locationData, accelerationData);
+
+  }
+
+
+  async loadCustomExport(file: File): Promise<ParseResult | null> {
+
+    return new Promise((resolve, reject) => {
+
+      const parseConfig: ParseConfig = {
+        header: true,
+        skipEmptyLines: true,
+        complete: resolve,
+        error: reject
+      };
+      this.papa.parse(file, parseConfig);
+
+    });
+
+  }
+
+
+  normalizeCustomExport(customExport: ParseResult): RecordingRaw[] {
+
+    const data = customExport.data;
+    const syntheticRows = customExport.data.map((row: any) => {
+      return {
+        date: row.date,
+        time: row.time,
+        latitude: row.latitude,
+        longitude: row.longitude,
+        shockmax: (+row.shockavg * 2) - +row.shockmax,
+        speed: row.speed,
+        isSynthetic: true
+      };
+    });
+
+    return [...syntheticRows, ...data].map((row: any) => {
+
+      const year = +row.date.substr(0, 4);
+      const month = +row.date.substr(4, 2) - 1;
+      const day = +row.date.substr(6, 2);
+      const hours = +row.time.substr(0, 2);
+      const minutes = +row.time.substr(2, 2);
+      const seconds = +row.time.substr(4, 2);
+      const milliseconds = +row.time.substr(6, 2) * 10;
+      const time = new Date(year, month, day, hours, minutes, seconds, milliseconds).getTime();
+
+      return {
+        locTime: time,
+        accTime: time,
+        lat: +row.latitude,
+        lon: +row.longitude,
+        acceleration: +row.shockmax,
+        velocity: +row.speed,
+        isSynthetic: !!row.isSynthetic
+      };
+
+    });
 
   }
 
