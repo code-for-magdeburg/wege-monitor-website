@@ -4,7 +4,6 @@
     <h5 class="card-title">Messfahrt</h5>
 
     <ul class="card-text list-unstyled">
-      <li><strong>{{ track?.recording?.normalizedRecordings?.length | number:'':'de-DE' }}</strong> Datenpunkte</li>
       <li><strong>{{ (track?.evaluatedData?.length || 0) - (track?.acceptedData?.length || 0) | number: '':'de-DE' }}</strong> Ungültige Wertungen</li>
       <li><strong>{{ track?.acceptedData?.length | number: '':'de-DE' }}</strong> Gültige Wertungen</li>
     </ul>
