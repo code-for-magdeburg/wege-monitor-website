@@ -7,13 +7,21 @@
          (leafletMapReady)="onMapReady($event)">
     </div>
 
-    <app-track-options *ngIf="track" [track]="track"></app-track-options>
+    <app-track-options
+      *ngIf="track"
+      [track]="track"
+      [selectedDataPoint]="selectedMarker"
+      [selectedIsExcluded]="selectedMarkerIsExcluded"
+      (recordingSubmitted)="uploadRecording()"
+      (trackDiscarded)="removeRecording()"
+      (dataPointDiscarded)="removeDataPoint($event)"
+      (dataPointUndiscarded)="undoRemoveDataPoint($event)"
+    ></app-track-options>
 
     <div class="map-footer p-3" style="background-color: #d3d3d3;">
 
       <div class="mb-3">
         <button class="btn btn-outline-primary" (click)="loadRecording()">Aufzeichnung laden</button>
-        <button class="btn btn-outline-primary ml-1" (click)="removeRecording()">Aufzeichung entfernen</button>
       </div>
 
       <div class="form-group form-check">

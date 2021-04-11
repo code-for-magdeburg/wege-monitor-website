@@ -1,8 +1,6 @@
 <div class="card m-2">
   <div class="card-body">
 
-    <h5 class="card-title">Messfahrt</h5>
-
     <ul class="card-text list-unstyled">
       <li><strong>{{ (track?.evaluatedData?.length || 0) - (track?.acceptedData?.length || 0) | number: '':'de-DE' }}</strong> Ungültige Wertungen</li>
       <li><strong>{{ track?.acceptedData?.length | number: '':'de-DE' }}</strong> Gültige Wertungen</li>
@@ -11,6 +9,24 @@
     <hr>
 
     <button type="button" class="btn btn-primary btn-sm btn-block" (click)="uploadData()">Daten spenden</button>
+    <button type="button" class="btn btn-outline-primary btn-sm btn-block" (click)="discardTrack()">Aufzeichnung verwerfen</button>
+
+    <hr *ngIf="selectedDataPoint">
+
+    <ul *ngIf="selectedDataPoint" class="list-group">
+      <li class="list-group-item d-flex flex-column">
+        <div class="d-flex flex-row justify-content-between">
+          <div class="flex-column small">
+            <div>Max. Acc: {{ selectedDataPoint.feature?.properties.maxAcceleration | number: '1.2-2' }}</div>
+            <div>Avg. Acc: {{ selectedDataPoint.feature?.properties.avgAcceleration | number: '1.2-2' }}</div>
+            <div>Speed: {{ selectedDataPoint.feature?.properties.velocity * 3.6 | number: '1.2-2' }} km/h</div>
+          </div>
+          <fa-icon [icon]="['fas', 'circle']" class="ml-2" [style.color]="selectedDataPoint.options.fillColor"></fa-icon>
+        </div>
+        <button *ngIf="!selectedIsExcluded" class="btn btn-outline-primary btn-sm mt-2" (click)="discardDataPoint(selectedDataPoint)">Entfernen</button>
+        <button *ngIf="selectedIsExcluded" class="btn btn-outline-primary btn-sm mt-2" (click)="undoDiscardDataPoint(selectedDataPoint)">Rückgängig</button>
+      </li>
+    </ul>
 
   </div>
 </div>

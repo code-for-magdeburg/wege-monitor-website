@@ -1,8 +1,6 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { Track } from '../track-analysis/track-loader.service';
-import { HttpClient } from '@angular/common/http';
-import { Papa } from 'ngx-papaparse';
-import * as JSZip from 'jszip';
+import { Circle } from 'leaflet';
 
 
 @Component({
@@ -14,34 +12,32 @@ export class TrackOptionsComponent {
 
 
   @Input() track: Track | undefined;
+  @Input() selectedDataPoint: Circle | undefined;
+  @Input() selectedIsExcluded = false;
+
+  @Output() recordingSubmitted = new EventEmitter();
+  @Output() trackDiscarded = new EventEmitter();
+  @Output() dataPointDiscarded = new EventEmitter<Circle>();
+  @Output() dataPointUndiscarded = new EventEmitter<Circle>();
 
 
-  constructor(private http: HttpClient, private papa: Papa) {
+  uploadData(): void {
+    this.recordingSubmitted.emit();
   }
 
 
-  async uploadData(): Promise<void> {
+  discardTrack(): void {
+    this.trackDiscarded.emit();
+  }
 
-    const createPresignedPostResponse = await this.http
-      .get<any>('/.netlify/functions/create-presigned-post')
-      .toPromise();
 
-    const formData = new FormData();
-    Object
-      .keys(createPresignedPostResponse.fields)
-      .forEach(key => formData.append(key, createPresignedPostResponse.fields[key]));
+  discardDataPoint(dataPoint: Circle): void {
+    this.dataPointDiscarded.emit(dataPoint);
+  }
 
-    const zip = new JSZip();
-    const recordingsCsv = this.papa.unparse(this.track?.recording.normalizedRecordings);
-    zip.file('recording.csv', recordingsCsv);
 
-    const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    formData.append('file', content);
-
-    await this.http
-      .post(createPresignedPostResponse.url, formData)
-      .toPromise();
-
+  undoDiscardDataPoint(dataPoint: Circle): void {
+    this.dataPointUndiscarded.emit(dataPoint);
   }
 
 

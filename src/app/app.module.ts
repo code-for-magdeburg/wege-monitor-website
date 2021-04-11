@@ -9,6 +9,7 @@ import { FormsModule } from '@angular/forms';
 import { TrackOptionsComponent } from './track-options/track-options.component';
 import { registerLocaleData } from '@angular/common';
 import de from '@angular/common/locales/de';
+import { faCircle as fasCircle } from '@fortawesome/free-solid-svg-icons';
 
 
 @NgModule({
@@ -31,7 +32,7 @@ export class AppModule {
 
 
   constructor(library: FaIconLibrary) {
-    library.addIcons();
+    library.addIcons(fasCircle);
     registerLocaleData(de);
   }
 

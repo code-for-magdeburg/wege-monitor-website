@@ -1,5 +1,6 @@
-import { Compiler, Component, Injector, OnInit } from '@angular/core';
+import { Compiler, Component, Injector, NgZone, OnInit } from '@angular/core';
 import {
+  Circle,
   circle, geoJSON,
   latLng,
   latLngBounds, Layer,
@@ -12,7 +13,8 @@ import { HttpClient } from '@angular/common/http';
 import { Papa } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
-import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
+import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording, RecordingRaw } from './track-analysis/track-loader.service';
+import * as JSZip from 'jszip';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
@@ -44,10 +46,13 @@ export class AppComponent implements OnInit {
   private avgBaseDataLayer: LayerGroup = layerGroup();
   private maxBaseDataLayer: LayerGroup = layerGroup();
   private recordingLayer: LayerGroup = layerGroup();
+  private excludedDataPoints: Circle[] = [];
 
   cyclePathsVisible = true;
   baseDataVisible = true;
   track: Track | null = null;
+  selectedMarker: Circle | undefined = undefined;
+  selectedMarkerIsExcluded = false;
 
 
   private static rateVelocity(velocity: number): string {
@@ -93,6 +98,7 @@ export class AppComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private papa: Papa,
+    private ngZone: NgZone,
     private compiler: Compiler,
     private injector: Injector) {
   }
@@ -168,6 +174,50 @@ export class AppComponent implements OnInit {
   }
 
 
+  async uploadRecording(): Promise<void> {
+
+    const createPresignedPostResponse = await this.http
+      .get<any>('/.netlify/functions/create-presigned-post')
+      .toPromise();
+
+    const formData = new FormData();
+    Object
+      .keys(createPresignedPostResponse.fields)
+      .forEach(key => formData.append(key, createPresignedPostResponse.fields[key]));
+
+    const withoutExcluded = (recording: RecordingRaw): boolean => !this.excludedDataPoints.some(e => e.feature?.id === recording.locTime);
+    const recordings = this.track?.recording.normalizedRecordings.filter(withoutExcluded);
+    const recordingsCsv = this.papa.unparse(recordings);
+    const zip = new JSZip();
+    zip.file('recording.csv', recordingsCsv);
+
+    const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    formData.append('file', content);
+
+    await this.http
+      .post(createPresignedPostResponse.url, formData)
+      .toPromise();
+
+  }
+
+
+  removeDataPoint(dataPoint: Circle): void {
+    this.excludedDataPoints.push(dataPoint);
+    this.selectedMarkerIsExcluded = true;
+    dataPoint.setStyle({ fillOpacity: 0.3 });
+  }
+
+
+  undoRemoveDataPoint(dataPoint: Circle): void {
+    const index = this.excludedDataPoints.findIndex(e => e === dataPoint);
+    if (index > 0) {
+      this.excludedDataPoints.splice(index, 1);
+    }
+    this.selectedMarkerIsExcluded = false;
+    dataPoint.setStyle({ fillOpacity: 1 });
+  }
+
+
   private loadCyclePaths(): void {
 
     this.http
@@ -220,13 +270,25 @@ export class AppComponent implements OnInit {
     const maxAcceleration = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
     const layers = recording.recordingsPerTimeUnit.map(row => {
       const fillColor = this.colorScale(row.maxAcceleration / maxAcceleration);
-      return circle(latLng(row.lat, row.lon), { radius: 5, stroke: false, fillColor, fillOpacity: 1 });
+      const marker = circle(
+        latLng(row.lat, row.lon),
+        { radius: 5, stroke: false, color: '#fcead0', weight: 5, fillColor, fillOpacity: 1 }
+      );
+      marker.feature = {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [row.lon, row.lat] },
+        id: row.time,
+        properties: { ...row }
+      };
+      marker.on('click', e => this.markerClicked(marker));
+      return marker;
     });
 
     if (this.recordingLayer) {
       this.recordingLayer.clearLayers();
     }
     this.recordingLayer = layerGroup(layers).addTo(this.map);
+    this.excludedDataPoints = [];
 
     const lle = recording.recordingsPerTimeUnit.map(row => latLng(row.lat, row.lon));
     const llb = latLngBounds(lle);
@@ -264,6 +326,20 @@ export class AppComponent implements OnInit {
   private hideBaseData(): void {
     this.avgBaseDataLayer.remove();
     this.maxBaseDataLayer.remove();
+  }
+
+
+  private markerClicked(marker: Circle): void {
+
+    this.ngZone.run(() => {
+      if (this.selectedMarker) {
+        this.selectedMarker.setStyle({ stroke: false });
+      }
+      this.selectedMarker = marker;
+      this.selectedMarkerIsExcluded = this.excludedDataPoints.some(e => e === marker);
+      marker.setStyle({ stroke: true });
+    });
+
   }
 
 
