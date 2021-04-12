@@ -152,6 +152,18 @@ export class TrackLoaderService {
   }
 
 
+  private static calcMillisecondsFromDateAndTimeValues(row: any) {
+    const year = +row.date.substr(0, 4);
+    const month = +row.date.substr(4, 2) - 1;
+    const day = +row.date.substr(6, 2);
+    const hours = +row.time.substr(0, 2);
+    const minutes = +row.time.substr(2, 2);
+    const seconds = +row.time.substr(4, 2);
+    const milliseconds = +row.time.substr(6, 2) * 10;
+    return new Date(year, month, day, hours, minutes, seconds, milliseconds).getTime();
+  }
+
+
   async loadPhyphoxExport(file: File): Promise<PhyphoxExport | null> {
 
     const unzipped = await new JSZip().loadAsync(file);
@@ -220,28 +232,24 @@ export class TrackLoaderService {
       };
     });
 
-    return [...syntheticRows, ...data].map((row: any) => {
-
-      const year = +row.date.substr(0, 4);
-      const month = +row.date.substr(4, 2) - 1;
-      const day = +row.date.substr(6, 2);
-      const hours = +row.time.substr(0, 2);
-      const minutes = +row.time.substr(2, 2);
-      const seconds = +row.time.substr(4, 2);
-      const milliseconds = +row.time.substr(6, 2) * 10;
-      const time = new Date(year, month, day, hours, minutes, seconds, milliseconds).getTime();
-
+    const result = [...syntheticRows, ...data].map((row: any) => {
+      const time = TrackLoaderService.calcMillisecondsFromDateAndTimeValues(row);
       return {
-        locTime: time,
-        accTime: time,
+        locTime: time / 1000,
+        accTime: time / 1000,
         lat: +row.latitude,
         lon: +row.longitude,
         acceleration: +row.shockmax,
         velocity: +row.speed,
         isSynthetic: !!row.isSynthetic
       };
-
     });
+
+    // Normalize time values
+    const minTime = Math.min(...result.map(d => d.locTime));
+    result.forEach(d => d.locTime = d.accTime = d.locTime - minTime);
+
+    return result;
 
   }
 
