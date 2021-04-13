@@ -267,9 +267,11 @@ export class AppComponent implements OnInit {
     const acceptedData = AppComponent.filterAcceptedRecording(evaluatedData);
     this.track = { recording, evaluatedData, acceptedData };
 
+    const minAcceleration = Math.min(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
     const maxAcceleration = Math.max(...recording.recordingsPerTimeUnit.map(a => a.maxAcceleration));
     const layers = recording.recordingsPerTimeUnit.map(row => {
-      const fillColor = this.colorScale(row.maxAcceleration / maxAcceleration);
+      const normalizedAcceleration = (row.maxAcceleration - minAcceleration) / (maxAcceleration - minAcceleration);
+      const fillColor = this.colorScale(normalizedAcceleration);
       const marker = circle(
         latLng(row.lat, row.lon),
         { radius: 5, stroke: false, color: '#fcead0', weight: 5, fillColor, fillOpacity: 1 }
