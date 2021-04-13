@@ -17,9 +17,10 @@
       <li class="list-group-item d-flex flex-column">
         <div class="d-flex flex-row justify-content-between">
           <div class="flex-column small">
+            <div>Time: {{ selectedDataPoint.feature?.properties.time | number: '1.1' }} s</div>
+            <div class="mb-1">Speed: {{ selectedDataPoint.feature?.properties.velocity * 3.6 | number: '1.2-2' }} km/h</div>
             <div>Max. Acc: {{ selectedDataPoint.feature?.properties.maxAcceleration | number: '1.2-2' }}</div>
             <div>Avg. Acc: {{ selectedDataPoint.feature?.properties.avgAcceleration | number: '1.2-2' }}</div>
-            <div>Speed: {{ selectedDataPoint.feature?.properties.velocity * 3.6 | number: '1.2-2' }} km/h</div>
           </div>
           <fa-icon [icon]="['fas', 'circle']" class="ml-2" [style.color]="selectedDataPoint.options.fillColor"></fa-icon>
         </div>
