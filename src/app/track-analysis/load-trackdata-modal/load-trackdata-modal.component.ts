@@ -41,7 +41,7 @@ export class LoadTrackdataModalComponent {
         };
         this.recordingLoaded.next(recording);
 
-        this.activeModal.dismiss();
+        this.activeModal.close();
 
       } else {
         // TODO: Handle failed loading of export file

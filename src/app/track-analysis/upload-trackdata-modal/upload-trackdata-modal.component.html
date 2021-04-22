@@ -1,0 +1,49 @@
+<div class="modal-header">
+  <h4 class="modal-title">Profilangaben</h4>
+  <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss()">
+    <span aria-hidden="true">&times;</span>
+  </button>
+</div>
+
+<div class="modal-body">
+
+  <h5>Maximale Beschleunigungswerte</h5>
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="lowerMaxAcceleration">Untergrenze</label>
+        <input type="number" class="form-control" id="lowerMaxAcceleration" [(ngModel)]="lowerMaxAcceleration" min="0">
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="upperMaxAcceleration">Obergrenze</label>
+        <input type="number" class="form-control" id="upperMaxAcceleration" [(ngModel)]="upperMaxAcceleration" min="0">
+      </div>
+    </div>
+  </div>
+
+  <hr class="invisible">
+
+  <h5>Durchschnittliche Beschleunigungswerte</h5>
+  <div class="row">
+    <div class="col">
+      <div class="form-group">
+        <label for="lowerAvgAcceleration">Untergrenze</label>
+        <input type="number" class="form-control" id="LowerAvgAcceleration" [(ngModel)]="lowerAvgAcceleration" min="0">
+      </div>
+    </div>
+    <div class="col">
+      <div class="form-group">
+        <label for="upperAvgAcceleration">Obergrenze</label>
+        <input type="number" class="form-control" id="upperAvgAcceleration" [(ngModel)]="upperAvgAcceleration" min="0">
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-secondary" (click)="activeModal.dismiss()">Abbrechen</button>
+  <button class="btn btn-primary" (click)="confirm()">Daten spenden</button>
+</div>

@@ -10,6 +10,17 @@ export type Recording = {
   recordingsPerTimeUnit: RecordingPerTimeUnit[];
 };
 
+export type DrivingProfile = {
+  avgAcceleration: {
+    lowerValue: number,
+    upperValue: number
+  },
+  maxAcceleration: {
+    lowerValue: number,
+    upperValue: number
+  }
+};
+
 export type PhyphoxExport = {
   accelerationCsv: string;
   locationCsv: string;
@@ -152,7 +163,7 @@ export class TrackLoaderService {
   }
 
 
-  private static calcMillisecondsFromDateAndTimeValues(row: any) {
+  private static calcMillisecondsFromDateAndTimeValues(row: any): number {
     const year = +row.date.substr(0, 4);
     const month = +row.date.substr(4, 2) - 1;
     const day = +row.date.substr(6, 2);
