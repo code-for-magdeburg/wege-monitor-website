@@ -7,12 +7,24 @@
 
 <div class="modal-body">
 
-  <label class="btn btn-outline-primary m-0">
-    Phyphox-Datei wählen <input type="file" #recordingFileInput (change)="recordingFileChanged($event)" hidden>
-  </label>
 
-  <label class="btn btn-outline-primary m-0 ml-1">
-    CSV-Datei wählen <input type="file" #customRecordingFileInput (change)="customRecordingFileChanged($event)" hidden>
-  </label>
+  <div *ngIf="isLoading">
+    <div class="d-flex flex-column align-items-center">
+      <span>Daten werden geladen...</span>
+      <div class="spinner-border m-5">
+        <span class="sr-only">Loading...</span>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading">
+    <label class="btn btn-outline-primary m-0">
+      Phyphox-Datei wählen <input type="file" #recordingFileInput (change)="recordingFileChanged($event)" hidden>
+    </label>
+
+    <label class="btn btn-outline-primary m-0 ml-1">
+      CSV-Datei wählen <input type="file" #customRecordingFileInput (change)="customRecordingFileChanged($event)" hidden>
+    </label>
+  </div>
 
 </div>

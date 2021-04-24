@@ -13,8 +13,7 @@ import { HttpClient } from '@angular/common/http';
 import { Papa } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
-import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording, RecordingRaw } from './track-analysis/track-loader.service';
-import * as JSZip from 'jszip';
+import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
@@ -202,32 +201,9 @@ export class AppComponent implements OnInit {
     moduleFactory
       .create(this.injector)
       .instance
-      .openUploadRecordingModal(this.track)
+      .openUploadRecordingModal(this.track, this.excludedDataPoints)
       .subscribe(async drivingProfile => {
-
-        const createPresignedPostResponse = await this.http
-          .get<any>('/.netlify/functions/create-presigned-post')
-          .toPromise();
-
-        const formData = new FormData();
-        Object
-          .keys(createPresignedPostResponse.fields)
-          .forEach(key => formData.append(key, createPresignedPostResponse.fields[key]));
-
-        const withoutExcluded = (recording: RecordingRaw): boolean => !this.excludedDataPoints.some(e => e.feature?.id === recording.locTime);
-        const recordings = this.track?.recording.normalizedRecordings.filter(withoutExcluded);
-        const recordingsCsv = this.papa.unparse(recordings);
-        const zip = new JSZip();
-        zip.file('recording.csv', recordingsCsv);
-        zip.file('profile.json', JSON.stringify(drivingProfile, null, 4));
-
-        const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-        formData.append('file', content);
-
-        await this.http
-          .post(createPresignedPostResponse.url, formData)
-          .toPromise();
-
+        console.log(drivingProfile);
       });
 
   }

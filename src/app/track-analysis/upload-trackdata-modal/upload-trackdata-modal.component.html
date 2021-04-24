@@ -7,43 +7,57 @@
 
 <div class="modal-body">
 
-  <h5>Maximale Beschleunigungswerte</h5>
-  <div class="row">
-    <div class="col">
-      <div class="form-group">
-        <label for="lowerMaxAcceleration">Untergrenze</label>
-        <input type="number" class="form-control" id="lowerMaxAcceleration" [(ngModel)]="lowerMaxAcceleration" min="0">
-      </div>
-    </div>
-    <div class="col">
-      <div class="form-group">
-        <label for="upperMaxAcceleration">Obergrenze</label>
-        <input type="number" class="form-control" id="upperMaxAcceleration" [(ngModel)]="upperMaxAcceleration" min="0">
+  <div *ngIf="isUploading">
+    <div class="d-flex flex-column align-items-center">
+      <span>Daten werden hochgeladen...</span>
+      <div class="spinner-border m-5">
+        <span class="sr-only">Uploading...</span>
       </div>
     </div>
   </div>
 
-  <hr class="invisible">
-
-  <h5>Durchschnittliche Beschleunigungswerte</h5>
-  <div class="row">
-    <div class="col">
-      <div class="form-group">
-        <label for="lowerAvgAcceleration">Untergrenze</label>
-        <input type="number" class="form-control" id="LowerAvgAcceleration" [(ngModel)]="lowerAvgAcceleration" min="0">
+  <div *ngIf="!isUploading">
+    <h5>Maximale Beschleunigungswerte</h5>
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <label for="lowerMaxAcceleration">Untergrenze</label>
+          <input type="number" class="form-control" id="lowerMaxAcceleration" [(ngModel)]="lowerMaxAcceleration" min="0">
+        </div>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="upperMaxAcceleration">Obergrenze</label>
+          <input type="number" class="form-control" id="upperMaxAcceleration" [(ngModel)]="upperMaxAcceleration" min="0">
+        </div>
       </div>
     </div>
-    <div class="col">
-      <div class="form-group">
-        <label for="upperAvgAcceleration">Obergrenze</label>
-        <input type="number" class="form-control" id="upperAvgAcceleration" [(ngModel)]="upperAvgAcceleration" min="0">
+
+    <hr class="invisible">
+
+    <h5>Durchschnittliche Beschleunigungswerte</h5>
+    <div class="row">
+      <div class="col">
+        <div class="form-group">
+          <label for="lowerAvgAcceleration">Untergrenze</label>
+          <input type="number" class="form-control" id="LowerAvgAcceleration" [(ngModel)]="lowerAvgAcceleration" min="0">
+        </div>
+      </div>
+      <div class="col">
+        <div class="form-group">
+          <label for="upperAvgAcceleration">Obergrenze</label>
+          <input type="number" class="form-control" id="upperAvgAcceleration" [(ngModel)]="upperAvgAcceleration" min="0">
+        </div>
       </div>
     </div>
   </div>
 
 </div>
 
-<div class="modal-footer">
-  <button class="btn btn-secondary" (click)="activeModal.dismiss()">Abbrechen</button>
-  <button class="btn btn-primary" (click)="confirm()">Daten spenden</button>
+<div *ngIf="!isUploading" class="modal-footer">
+  <button class="btn btn-secondary" (click)="activeModal.dismiss()" [disabled]="isUploading">Abbrechen</button>
+  <button class="btn btn-primary" (click)="confirm()" [disabled]="isUploading">
+    <span *ngIf="isUploading" class="spinner-border spinner-border-sm"></span>
+    Daten spenden
+  </button>
 </div>

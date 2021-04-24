@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { DrivingProfile, Recording, Track } from './track-loader.service';
 import { UploadTrackdataModalComponent } from './upload-trackdata-modal/upload-trackdata-modal.component';
 import { FormsModule } from '@angular/forms';
+import { Circle } from 'leaflet';
 
 
 @NgModule({
@@ -28,20 +29,10 @@ export class TrackAnalysisModule {
   }
 
 
-  public openUploadRecordingModal(track: Track): Observable<DrivingProfile> {
-
-    const recordings = track.recording.recordingsPerTimeUnit;
-    const upperMaxAcceleration = Math.max(...recordings.map(r => r.maxAcceleration));
-    const upperAvgAcceleration = Math.max(...recordings.map(r => r.avgAcceleration));
-
+  public openUploadRecordingModal(track: Track, excludedDataPoints: Circle[]): Observable<DrivingProfile> {
     const modalRef = this.modalService.open(UploadTrackdataModalComponent);
-    (modalRef.componentInstance as UploadTrackdataModalComponent).lowerMaxAcceleration = 0;
-    (modalRef.componentInstance as UploadTrackdataModalComponent).upperMaxAcceleration = Math.ceil(upperMaxAcceleration);
-    (modalRef.componentInstance as UploadTrackdataModalComponent).lowerAvgAcceleration = 0;
-    (modalRef.componentInstance as UploadTrackdataModalComponent).upperAvgAcceleration = Math.ceil(upperAvgAcceleration);
-
+    (modalRef.componentInstance as UploadTrackdataModalComponent).initialize(track, excludedDataPoints);
     return (modalRef.componentInstance as UploadTrackdataModalComponent).uploadTrackDataConfirmed.asObservable();
-
   }
 
 

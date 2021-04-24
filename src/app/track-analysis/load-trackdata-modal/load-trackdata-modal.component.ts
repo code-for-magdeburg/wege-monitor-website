@@ -12,6 +12,8 @@ import { Recording, TrackLoaderService } from '../track-loader.service';
 export class LoadTrackdataModalComponent {
 
 
+  isLoading = false;
+
   recordingLoaded = new Subject<Recording>();
 
   @ViewChild('recordingFileInput') recordingFileInput!: ElementRef;
@@ -26,6 +28,8 @@ export class LoadTrackdataModalComponent {
 
     const inputElement = event.target as HTMLInputElement;
     if (inputElement.files && inputElement.files.length > 0) {
+
+      this.isLoading = true;
 
       const loadedPhyphoxExport = await this.trackLoaderService.loadPhyphoxExport(inputElement.files[0]);
       if (loadedPhyphoxExport) {
@@ -47,7 +51,8 @@ export class LoadTrackdataModalComponent {
         // TODO: Handle failed loading of export file
       }
 
-      this.recordingFileInput.nativeElement.value = '';
+      inputElement.value = '';
+      this.isLoading = false;
 
     }
 
@@ -58,6 +63,8 @@ export class LoadTrackdataModalComponent {
 
     const inputElement = event.target as HTMLInputElement;
     if (inputElement.files && inputElement.files.length > 0) {
+
+      this.isLoading = true;
 
       const loadedCustomExport = await this.trackLoaderService.loadCustomExport(inputElement.files[0]);
       if (loadedCustomExport) {
@@ -79,7 +86,8 @@ export class LoadTrackdataModalComponent {
         // TODO: Handle failed loading of export file
       }
 
-      this.customRecordingFileInput.nativeElement.value = '';
+      inputElement.value = '';
+      this.isLoading = false;
 
     }
 
