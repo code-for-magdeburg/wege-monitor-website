@@ -4,7 +4,8 @@
     <div *ngIf="mapOptions" class="map"
          leaflet
          [leafletOptions]="mapOptions"
-         (leafletMapReady)="onMapReady($event)">
+         (leafletMapReady)="onMapReady($event)"
+         (leafletCenterChange)="centerChanged()">
     </div>
 
     <app-track-options

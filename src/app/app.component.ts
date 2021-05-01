@@ -12,13 +12,11 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { Papa } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
-import { h3ToGeo, geoToH3, h3ToGeoBoundary } from 'h3-js';
+import { h3ToGeo, geoToH3, h3ToGeoBoundary, polyfill } from 'h3-js';
 import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
-const H3_MAGDEBURG_RES7 = geoToH3(CENTER_MAGDEBURG.lat, CENTER_MAGDEBURG.lng, 7);
-
 
 const MIN_VELOCITY = 15 / 3.6;
 const BEST_VELOCITY = 20 / 3.6;
@@ -125,6 +123,7 @@ export class AppComponent implements OnInit {
     this.map = map;
     this.loadCyclePaths();
     this.loadBaseData();
+    this.showBaseData();
   }
 
 
@@ -225,29 +224,62 @@ export class AppComponent implements OnInit {
 
   private loadBaseData(): void {
 
-    const params = { h3Res7Key: H3_MAGDEBURG_RES7 };
-    this.http
-      .get<{ h3Index: string, maxAcceleration: number, avgAcceleration: number }[]>('/.netlify/functions/get-base-data', { params })
-      .subscribe(data => {
+    const mapBounds = this.map.getBounds();
+    const mapNorthWest = mapBounds.getNorthWest();
+    const mapNorthEast = mapBounds.getNorthEast();
+    const mapSouthEast = mapBounds.getSouthEast();
+    const mapSouthWest = mapBounds.getSouthWest();
 
-        const layers: { avgLayer: Layer, maxLayer: Layer }[] = data.map(row => {
+    // Collect all resolution 7 H3 indices within current map view
+    const fill = new Set(polyfill([
+      [mapNorthWest.lat, mapNorthWest.lng],
+      [mapNorthEast.lat, mapNorthEast.lng],
+      [mapSouthEast.lat, mapSouthEast.lng],
+      [mapSouthWest.lat, mapSouthWest.lng],
+      [mapNorthWest.lat, mapNorthWest.lng]
+    ], 7));
 
-          const avgFillColor = this.baseDataColorScale(row.avgAcceleration);
-          const poly = h3ToGeoBoundary(row.h3Index);
-          const avgLayer = polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor: avgFillColor, fillOpacity: 0.6 });
+    // Add map corners
+    fill.add(geoToH3(mapNorthWest.lat, mapNorthWest.lng, 7));
+    fill.add(geoToH3(mapNorthEast.lat, mapNorthEast.lng, 7));
+    fill.add(geoToH3(mapSouthEast.lat, mapSouthEast.lng, 7));
+    fill.add(geoToH3(mapSouthWest.lat, mapSouthWest.lng, 7));
 
-          const maxFillColor = this.baseDataColorScale(row.maxAcceleration);
-          const center = h3ToGeo(row.h3Index);
-          const maxLayer = circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor: maxFillColor, fillOpacity: 0.6 });
+    // Refuse to load data when zoom level is too low
+    if (fill.size > 25) {
+      return;
+    }
 
-          return { avgLayer, maxLayer };
+    this.avgBaseDataLayer.clearLayers();
+    this.maxBaseDataLayer.clearLayers();
+
+    for (const fillKey of fill) {
+      const params = { h3Res7Key: fillKey };
+      this.http
+        .get<{ h3Index: string, maxAcceleration: number, avgAcceleration: number }[]>('/.netlify/functions/get-base-data', { params })
+        .subscribe(data => {
+
+          const layers: { avgLayer: Layer, maxLayer: Layer }[] = data.map(row => {
+
+            const avgFillColor = this.baseDataColorScale(row.avgAcceleration);
+            const poly = h3ToGeoBoundary(row.h3Index);
+            const avgLayer = polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor: avgFillColor, fillOpacity: 0.6 });
+
+            const maxFillColor = this.baseDataColorScale(row.maxAcceleration);
+            const center = h3ToGeo(row.h3Index);
+            const maxLayer = circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor: maxFillColor, fillOpacity: 0.6 });
+
+            return { avgLayer, maxLayer };
+
+          });
+
+          layers.forEach(layer => {
+            this.avgBaseDataLayer.addLayer(layer.avgLayer);
+            this.maxBaseDataLayer.addLayer(layer.maxLayer);
+          });
 
         });
-
-        this.avgBaseDataLayer = layerGroup(layers.map(l => l.avgLayer)).addTo(this.map);
-        this.maxBaseDataLayer = layerGroup(layers.map(l => l.maxLayer)).addTo(this.map);
-
-      });
+    }
 
   }
 
@@ -287,6 +319,11 @@ export class AppComponent implements OnInit {
     const llb = latLngBounds(lle);
     this.map.fitBounds(llb);
 
+  }
+
+
+  centerChanged(): void {
+    this.loadBaseData();
   }
 
 
