@@ -158,6 +158,7 @@ async function saveToDatabase(recordingsByH3Index) {
         },
         UpdateExpression: 'set avgAcceleration = :avgAcceleration, maxAcceleration = :maxAcceleration',
         ExpressionAttributeValues: {
+          // TODO: Careful! Don't just fetch the first entry. Has to be fixed!
           ':avgAcceleration': recordings.entries[0].avgAcceleration,
           ':maxAcceleration': recordings.entries[0].maxAcceleration
         },
