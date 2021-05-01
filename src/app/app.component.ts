@@ -227,16 +227,16 @@ export class AppComponent implements OnInit {
 
     const params = { h3Res7Key: H3_MAGDEBURG_RES7 };
     this.http
-      .get<{ h3Index: string, maxAcceleration: number, avgAcceleration: number }[]>('/.netlify/functions/get-base-data', { params })
+      .get<{ h3Index: string, maxAcc: number, avgAcc: number }[]>('/.netlify/functions/get-base-data', { params })
       .subscribe(data => {
 
         const layers: { avgLayer: Layer, maxLayer: Layer }[] = data.map(row => {
 
-          const avgFillColor = this.baseDataColorScale(row.avgAcceleration);
+          const avgFillColor = this.baseDataColorScale(row.avgAcc);
           const poly = h3ToGeoBoundary(row.h3Index);
           const avgLayer = polygon(poly.map(d => latLng(d[0], d[1])), { stroke: false, fillColor: avgFillColor, fillOpacity: 0.6 });
 
-          const maxFillColor = this.baseDataColorScale(row.maxAcceleration);
+          const maxFillColor = this.baseDataColorScale(row.maxAcc);
           const center = h3ToGeo(row.h3Index);
           const maxLayer = circle(latLng(center[0], center[1]), { radius: 10, stroke: false, fillColor: maxFillColor, fillOpacity: 0.6 });
 
