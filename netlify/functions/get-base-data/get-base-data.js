@@ -20,7 +20,7 @@ const handler = async (event) => {
     const h3Res7Key = event.queryStringParameters.h3Res7Key;
     const params = { Key: { h3IndexRes07: h3Res7Key }, TableName: 'AccelerationBaseDataH3Res07' };
     const getResult = await docClient.get(params).promise();
-    const items = getResult.Item?.h3IndexRes13 || [];
+    const items = getResult.Item && getResult.Item.h3IndexRes13 != null ? getResult.Item.h3IndexRes13 : [];
 
     const result = [];
 
