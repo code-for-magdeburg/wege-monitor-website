@@ -232,6 +232,7 @@ const handler = async (event) => {
     }
 
   } catch (error) {
+    console.log(error);
     return { statusCode: 500, body: error.toString() }
   }
 
