@@ -56,4 +56,6 @@ Thumbs.db
 # Local Netlify folder
 .netlify
 
-/.env
+.env
+.env-dev
+.env-prod
