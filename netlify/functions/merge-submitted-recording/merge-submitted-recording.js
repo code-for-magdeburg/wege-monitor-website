@@ -216,6 +216,7 @@ const handler = async (event) => {
 
   try {
 
+    console.log(JSON.stringify(event));
 
     const key = event.queryStringParameters.key;
     console.log(key);
