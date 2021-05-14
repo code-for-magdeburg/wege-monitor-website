@@ -2,7 +2,6 @@ const AWS = require('aws-sdk');
 const JSZip = require('jszip');
 const Papa = require('papaparse');
 const h3 = require('h3-js');
-const querystring = require("querystring");
 
 
 const { WM_AWS_ACCESS_KEY_ID, WM_AWS_SECRET_ACCESS_KEY, WM_S3_BUCKET_NAME } = process.env;
@@ -217,9 +216,9 @@ const handler = async (event) => {
 
   try {
 
-    const params = querystring.parse(event.body);
+    const key = event.queryStringParameters.key;
 
-    const { recordings, profile } = await loadAndExtractRecordingFile(params.key);
+    const { recordings, profile } = await loadAndExtractRecordingFile(key);
 
     const recordingsByLocTime = prepareAndFilterRecordings(recordings);
     const normalizedRecordings = normalizeRecordings(recordingsByLocTime, profile);
