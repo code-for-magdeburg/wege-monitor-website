@@ -216,7 +216,8 @@ const handler = async (event) => {
 
   try {
 
-    const key = event.queryStringParameters.key;
+    const body = JSON.parse(event.body);
+    const key = body.key;
 
     const { recordings, profile } = await loadAndExtractRecordingFile(key);
 
