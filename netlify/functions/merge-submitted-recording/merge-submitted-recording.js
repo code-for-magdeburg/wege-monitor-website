@@ -216,32 +216,15 @@ const handler = async (event) => {
 
   try {
 
-    console.log(JSON.stringify(event));
-
     const key = event.queryStringParameters.key;
-    console.log(key);
-    console.log('a');
 
     const { recordings, profile } = await loadAndExtractRecordingFile(key);
-    console.log('b');
-    console.log(JSON.stringify(recordings));
-    console.log(JSON.stringify(profile));
 
     const recordingsByLocTime = prepareAndFilterRecordings(recordings);
-    console.log('c');
-    console.log(JSON.stringify(recordingsByLocTime));
-
     const normalizedRecordings = normalizeRecordings(recordingsByLocTime, profile);
-    console.log('d');
-    console.log(JSON.stringify(normalizedRecordings));
-
     const recordingsPerH3Res13 = groupByH3Index(normalizedRecordings);
-    console.log('e');
-    console.log(JSON.stringify(recordingsPerH3Res13));
 
     const mergeResult = await mergeIntoDatabase(recordingsPerH3Res13);
-    console.log('f');
-    console.log(JSON.stringify(mergeResult));
 
     return {
       statusCode: 200,
@@ -249,7 +232,6 @@ const handler = async (event) => {
     }
 
   } catch (error) {
-    console.log(error.toString());
     return { statusCode: 500, body: error.toString() }
   }
 
