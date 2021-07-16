@@ -1,8 +1,6 @@
 <div class="modal-header">
   <h4 class="modal-title">Aufzeichnung laden</h4>
-  <button type="button" class="close" aria-label="Close" (click)="activeModal.dismiss()">
-    <span aria-hidden="true">&times;</span>
-  </button>
+  <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.dismiss()"></button>
 </div>
 
 <div class="modal-body">
@@ -12,7 +10,7 @@
     <div class="d-flex flex-column align-items-center">
       <span>Daten werden geladen...</span>
       <div class="spinner-border m-5">
-        <span class="sr-only">Loading...</span>
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
   </div>
@@ -22,7 +20,7 @@
       Phyphox-Datei wählen <input type="file" #recordingFileInput (change)="recordingFileChanged($event)" hidden>
     </label>
 
-    <label class="btn btn-outline-primary m-0 ml-1">
+    <label class="btn btn-outline-primary m-0 ms-1">
       CSV-Datei wählen <input type="file" #customRecordingFileInput (change)="customRecordingFileChanged($event)" hidden>
     </label>
   </div>
