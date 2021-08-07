@@ -1,4 +1,4 @@
-import { Compiler, Component, Injector, NgZone, OnInit } from '@angular/core';
+import { AfterViewInit, Compiler, Component, ElementRef, Injector, NgZone, OnInit, ViewChild } from '@angular/core';
 import {
   Circle,
   circle, geoJSON,
@@ -14,6 +14,7 @@ import { Papa } from 'ngx-papaparse';
 import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary, polyfill } from 'h3-js';
 import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
+import { Offcanvas } from 'bootstrap';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
@@ -32,7 +33,7 @@ const PERFECT_SPEED = 'PERFECT_SPEED';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })
-export class AppComponent implements OnInit {
+export class AppComponent implements OnInit, AfterViewInit {
 
 
   private chromaScale = chroma.scale('RdYlGn');
@@ -50,6 +51,9 @@ export class AppComponent implements OnInit {
   track: Track | null = null;
   selectedMarker: Circle | undefined = undefined;
   selectedMarkerIsExcluded = false;
+
+  @ViewChild('root') rootElement!: ElementRef;
+  @ViewChild('offcanvas') offcanvasElement!: ElementRef;
 
 
   private static rateVelocity(velocity: number): string {
@@ -116,6 +120,12 @@ export class AppComponent implements OnInit {
       center: CENTER_MAGDEBURG
     };
 
+  }
+
+
+  ngAfterViewInit(): void {
+    const offcanvas = new Offcanvas(this.offcanvasElement.nativeElement);
+    offcanvas.show(this.rootElement.nativeElement);
   }
 
 

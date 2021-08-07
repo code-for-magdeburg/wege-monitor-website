@@ -1,6 +1,13 @@
+
 #root {
   height: 100%;
   position: relative;
+}
+
+.offcanvas {
+  transition: none;
+  background-color: #d3d3d3;
+  height: 180px;
 }
 
 .map-view {
@@ -10,15 +17,9 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  padding-bottom: 180px;
 
   .map {
     height: 100%;
   }
-
-  .map-footer {
-    width: 100%;
-    flex: 0 1 auto;
-    min-height: 180px;
-  }
-
 }
