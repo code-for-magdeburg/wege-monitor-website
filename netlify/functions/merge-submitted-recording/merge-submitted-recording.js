@@ -48,15 +48,15 @@ async function loadAndExtractRecordingFile(awsKey) {
 
 
 function prepareAndFilterRecordings(recordings) {
-  const recordingsByLocTimeMap = recordings.data.reduce((entryMap, e) => entryMap.set(e.locTime, [...entryMap.get(e.locTime) || [], e]), new Map());
+  const recordingsByTimeMap = recordings.data.reduce((entryMap, e) => entryMap.set(e.time, [...entryMap.get(e.time) || [], e]), new Map());
   return Array
-    .from(recordingsByLocTimeMap.values())
+    .from(recordingsByTimeMap.values())
     .map(group => {
       const lat = group.reduce((p, c) => p + c.lat, 0) / group.length;
       const lon = group.reduce((p, c) => p + c.lon, 0) / group.length;
       const velocity = group.reduce((p, c) => p + c.velocity, 0) / group.length;
       return {
-        locTime: group[0].locTime,
+        time: group[0].time,
         lat,
         lon,
         h3IndexRes13: h3.geoToH3(lat, lon, 13),
@@ -220,8 +220,8 @@ const handler = async (event) => {
 
     const { recordings, profile } = await loadAndExtractRecordingFile(key);
 
-    const recordingsByLocTime = prepareAndFilterRecordings(recordings);
-    const normalizedRecordings = normalizeRecordings(recordingsByLocTime, profile);
+    const recordingsByTime = prepareAndFilterRecordings(recordings);
+    const normalizedRecordings = normalizeRecordings(recordingsByTime, profile);
     const recordingsPerH3Res13 = groupByH3Index(normalizedRecordings);
 
     const mergeResult = await mergeIntoDatabase(recordingsPerH3Res13);

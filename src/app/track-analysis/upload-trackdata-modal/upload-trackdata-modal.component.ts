@@ -63,10 +63,10 @@ export class UploadTrackdataModalComponent {
       .keys(createPresignedPostResponse.fields)
       .forEach(key => formData.append(key, createPresignedPostResponse.fields[key]));
 
-    const withoutExcluded = (recording: RecordingRaw): boolean => !this.excludedDataPoints.some(e => e.feature?.id === recording.locTime);
+    const withoutExcluded = (recording: RecordingRaw): boolean => !this.excludedDataPoints.some(e => e.feature?.id === recording.time);
     const recordings = this.track.recording.normalizedRecordings
       .filter(withoutExcluded)
-      .sort((a, b) => a.locTime - b.locTime);
+      .sort((a, b) => a.time - b.time);
     const recordingsCsv = this.papa.unparse(recordings);
     const zip = new JSZip();
     zip.file('recording.csv', recordingsCsv);

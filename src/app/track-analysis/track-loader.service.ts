@@ -46,8 +46,7 @@ export type CustomExport = {
 };
 
 export type RecordingRaw = {
-  locTime: number;
-  accTime: number;
+  time: number;
   lat: number;
   lon: number;
   acceleration: number;
@@ -147,8 +146,7 @@ export class TrackLoaderService {
       // Record datum if time is within location margin
       if (currentLocationDatum && Math.abs(currentLocationDatum.time - accelerationDatum.time) < margin) {
         result.push({
-          locTime: currentLocationDatum.time,
-          accTime: accelerationDatum.time,
+          time: currentLocationDatum.time,
           lat: currentLocationDatum.lat,
           lon: currentLocationDatum.lon,
           acceleration: accelerationDatum.accAbsolute,
@@ -246,8 +244,7 @@ export class TrackLoaderService {
     const result = [...syntheticRows, ...data].map((row: any) => {
       const time = TrackLoaderService.calcMillisecondsFromDateAndTimeValues(row);
       return {
-        locTime: time / 1000,
-        accTime: time / 1000,
+        time: time / 1000,
         lat: +row.latitude,
         lon: +row.longitude,
         acceleration: +row.shockmax,
@@ -257,8 +254,8 @@ export class TrackLoaderService {
     });
 
     // Normalize time values
-    const minTime = Math.min(...result.map(d => d.locTime));
-    result.forEach(d => d.locTime = d.accTime = d.locTime - minTime);
+    const minTime = Math.min(...result.map(d => d.time));
+    result.forEach(d => d.time = d.time - minTime);
 
     return result;
 
@@ -268,14 +265,14 @@ export class TrackLoaderService {
   async aggregateRecordingData(recording: RecordingRaw[]): Promise<RecordingPerTimeUnit[]> {
 
     const m = recording.reduce(
-      (entryMap, e) => entryMap.set(e.locTime, [...entryMap.get(e.locTime) || [], e]),
+      (entryMap, e) => entryMap.set(e.time, [...entryMap.get(e.time) || [], e]),
       new Map<number, RecordingRaw[]>()
     );
 
     return Array
       .from(m.values())
       .map(group => ({
-        time: group[0].locTime,
+        time: group[0].time,
         lat: group.reduce((p, c) => p + c.lat, 0) / group.length,
         lon: group.reduce((p, c) => p + c.lon, 0) / group.length,
         maxAcceleration: Math.max(...group.map(r => r.acceleration)),
