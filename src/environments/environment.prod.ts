@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  cloudfrontBaseUrl: 'https://xxx-tbd-xxx.cloudfront.net',
-  awsHttpApiBaseUrl: 'https://xxx-tbd-xxx.execute-api.eu-central-1.amazonaws.com'
+  cloudfrontBaseUrl: 'https://d1mklyt3n6x7vb.cloudfront.net',
+  awsHttpApiBaseUrl: 'https://l3g43qojbd.execute-api.eu-central-1.amazonaws.com'
 };
