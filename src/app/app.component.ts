@@ -15,6 +15,7 @@ import * as chroma from 'chroma-js';
 import { h3ToGeo, geoToH3, h3ToGeoBoundary, polyfill } from 'h3-js';
 import { RecordingWithRating, RecordingPerTimeUnit, Track, Recording } from './track-analysis/track-loader.service';
 import { Offcanvas } from 'bootstrap';
+import { environment } from '../environments/environment';
 
 
 const CENTER_MAGDEBURG = latLng(52.120545, 11.627632);
@@ -264,12 +265,13 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.maxBaseDataLayer.clearLayers();
 
     for (const fillKey of fill) {
-      const params = { h3Res7Key: fillKey };
       this.http
-        .get<{ h3Index: string, maxAcc: number, avgAcc: number }[]>('/.netlify/functions/get-base-data', { params })
+        .get<{ h3IndexRes07: string, h3IndexRes13: any }>(`${environment.cloudfrontBaseUrl}/H3Res07/${fillKey}.json`)
         .subscribe(data => {
 
-          const layers: { avgLayer: Layer, maxLayer: Layer }[] = data.map(row => {
+          const layers: { avgLayer: Layer, maxLayer: Layer }[] = Object.keys(data.h3IndexRes13).map(key => {
+
+            const row = { ...data.h3IndexRes13[key], h3Index: key };
 
             const avgFillColor = this.baseDataColorScale(row.avgAcc);
             const poly = h3ToGeoBoundary(row.h3Index);

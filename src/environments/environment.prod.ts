@@ -1,3 +1,4 @@
 export const environment = {
-  production: true
+  production: true,
+  cloudfrontBaseUrl: 'https://xxx-tbd-xxx.cloudfront.net',
 };
