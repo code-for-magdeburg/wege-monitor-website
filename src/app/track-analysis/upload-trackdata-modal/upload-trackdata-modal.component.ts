@@ -6,6 +6,7 @@ import * as JSZip from 'jszip';
 import { HttpClient } from '@angular/common/http';
 import { Circle } from 'leaflet';
 import { Papa } from 'ngx-papaparse';
+import { environment } from '../../../environments/environment';
 
 
 @Component({
@@ -55,7 +56,7 @@ export class UploadTrackdataModalComponent {
     this.isUploading = true;
 
     const createPresignedPostResponse = await this.http
-      .get<any>('/.netlify/functions/create-presigned-post')
+      .get<any>(`${environment.awsHttpApiBaseUrl}/get-presigned-url`)
       .toPromise();
 
     const formData = new FormData();
